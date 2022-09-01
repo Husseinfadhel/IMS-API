@@ -269,7 +269,12 @@ async def patch_student(student_id, schema: Student):
 async def del_student(student_id):
     student = await Students.filter(id=student_id).first().values('name', 'unique_id')
     name = student['name']
+    installments = await StudentInstallments.filter(student_id=student_id).all()
+    for installment in installments:
+        await TemporaryPatch.filter(unique_id=installment.unique_id).delete()
+
     await Students.filter(id=student_id).delete()
+
     await TemporaryPatch.filter(unique_id=student['unique_id']).delete()
 
     async with in_transaction() as conn:

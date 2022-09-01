@@ -15,7 +15,7 @@ total_hours_wasted_here = 48
 """
 sync_router = APIRouter()
 
-HOST = "https://imsalhashimy-busy-kudu-vn.eu-gb.mybluemix.net"
+HOST = "http://65.20.73.107"
 
 
 async def get_users() -> list:
@@ -336,14 +336,15 @@ async def sync():
     for student_installment_patch in students_installment_patch:
         install_patch = await StudentInstallments.filter(unique_id=student_installment_patch).first().prefetch_related(
             'student', 'installment')
-        data_patch = {"date": str(install_patch.date), "amount": install_patch.amount,
-                      "unique_id": install_patch.unique_id,
-                      "invoice": install_patch.invoice,
-                      "install_unique_id": install_patch.installment.unique_id,
-                      "student_unique_id": install_patch.student.unique_id, "patch": True}
-        req = requests.post(f'{HOST}/student_installment', json=data_patch)
-        if req.status_code == 200:
-            await TemporaryPatch.filter(unique_id=install_patch.unique_id).update(sync_state=1)
+        if install_patch:
+            data_patch = {"date": str(install_patch.date), "amount": install_patch.amount,
+                          "unique_id": install_patch.unique_id,
+                          "invoice": install_patch.invoice,
+                          "install_unique_id": install_patch.installment.unique_id,
+                          "student_unique_id": install_patch.student.unique_id, "patch": True}
+            req = requests.post(f'{HOST}/student_installment', json=data_patch)
+            if req.status_code == 200:
+                await TemporaryPatch.filter(unique_id=install_patch.unique_id).update(sync_state=1)
     for user_auth in users_patch:
         user = await Users.filter(unique_id=user_auth).first()
         auths = await UserAuth.filter(user_id=user.id).all().prefetch_related('state')
